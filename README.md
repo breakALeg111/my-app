@@ -1,7 +1,9 @@
 # 日常助手 · 日志 / 倒数日 / 保养
 
-零依赖的移动端 Web App（PWA），三个功能：每日工作日志、倒数日/正数日、车辆保养提醒。
-数据全部保存在手机本地浏览器（localStorage），不上传服务器。
+移动端 App，三个功能：每日工作日志、倒数日/正数日、车辆保养提醒。
+同一套代码既是 **PWA（Web）**，也能打包成 **Android 原生 APK**；数据全部保存在手机本地，不上传服务器。
+
+> 已构建好的调试版安装包：`dist/daily-hub-debug.apk`（包名 `com.dailyhub.app`，Android 7.0+ 可用）。
 
 ## 本地运行
 
@@ -76,7 +78,54 @@
 ### 更新版本
 改动后重新 push，GitHub Pages 会自动更新。若手机上看不到变化，下拉刷新一次（Service Worker 缓存名为 `dailyhub-v1`，大版本改动可手动调大该版本号）。
 
-## 打包成 APK（安装到手机）
+## 打包成 Android 原生 APK（Capacitor）
+
+工程已内置 Capacitor 配置，产出的是**真正的安装包**（不是浏览器快捷方式）：独立图标、独立进程、可用系统通知。
+
+### 在本机构建
+前置：Node ≥ 22、JDK 21、Android SDK（Platform 36 + Build-Tools 35）。若缺少可依次执行仓库里的脚本（下载到项目外的 `../.toolchain`，不污染仓库）：
+
+```bash
+python tools/install_toolchain.py   # Node + JDK + Android 命令行工具
+python tools/install_node22.py      # Capacitor CLI 需要 Node >= 22
+python tools/install_jdk21.py       # Capacitor 8 插件需要 JDK 21
+```
+
+然后：
+
+```bash
+npm install                    # 安装 Capacitor 与插件
+python tools/build_web.py      # 收集 Web 资源到 www/
+npx cap sync android           # 同步到 android/ 工程
+python tools/gen_android_assets.py   # 生成应用图标与启动图
+cd android && gradlew.bat assembleDebug
+python tools/copy_apk.py       # 复制到 dist/daily-hub-debug.apk
+```
+
+也可以直接用封装好的脚本：
+
+```bash
+npm run sync       # build_web + cap sync
+npm run android    # sync + 构建 debug APK
+npm run open       # 用 Android Studio 打开工程
+```
+
+构建前需要在 `android/local.properties` 里写 `sdk.dir=<你的 Android SDK 路径>`。
+
+### 原生能力
+| 能力 | 实现 |
+|---|---|
+| 状态栏配色 | 跟随系统浅色/深色，颜色与顶栏一致（`js/native.js` + `@capacitor/status-bar`） |
+| 启动图 | 开屏画面 1 秒后淡出（`@capacitor/splash-screen` + `res/drawable/splash.png`） |
+| 返回键 | 有弹层先关弹层 → 不在首页则回首页 → 首页连按两次退出 |
+| 本地通知 | 每天 9:00 汇总推送保养超期/临近与当天倒数日；倒数日前一天单条提醒（`js/native.js` + `@capacitor/local-notifications`），设置页可开关与测试 |
+
+浏览器环境会自动降级：不显示通知开关，其余功能完全不受影响。
+
+### 发布正式版
+需要自己的签名密钥：在 Android Studio 用 **Build → Generate Signed Bundle / APK** 生成 `app-release.apk`（或 aab 上架 Google Play）。**务必保存 keystore**，后续更新必须用同一签名才能覆盖安装。
+
+## 打包成 PWA（PWABuilder）
 
 前提：先按上一节部署到 GitHub Pages，**必须是 HTTPS**，否则打包工具无法通过校验。
 

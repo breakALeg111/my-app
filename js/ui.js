@@ -4,12 +4,6 @@
   var U = App.utils;
   var toastHost, modalHost;
   var modalStack = 0;
-  var pushedState = false;
-
-  // Android 返回键：优先关闭弹层，而不是直接退出应用
-  window.addEventListener('popstate', function () {
-    if (modalHost && modalHost.classList.contains('is-open')) closeModal(true);
-  });
 
   function el(tag, cls, html) {
     var n = document.createElement(tag);
@@ -30,18 +24,12 @@
     }, type === 'error' ? 3200 : 2000);
   }
 
-  /** fromPopState=true 表示由系统返回键触发，不再回退历史 */
-  function closeModal(fromPopState) {
+  function closeModal() {
     if (!modalHost) return;
     modalHost.classList.remove('is-open');
     modalHost.innerHTML = '';
     modalStack = 0;
     document.body.style.overflow = '';
-    if (pushedState && !fromPopState) {
-      pushedState = false;
-      try { history.back(); } catch (e) { /* 忽略 */ }
-    }
-    pushedState = false;
   }
 
   /**
@@ -85,12 +73,6 @@
     modalHost.classList.add('is-open');
     modalStack++;
     document.body.style.overflow = 'hidden';
-
-    // 打开弹层时压入一条历史，让系统返回键先关弹层
-    if (!pushedState) {
-      pushedState = true;
-      try { history.pushState({ modal: 1 }, ''); } catch (e) { pushedState = false; }
-    }
 
     var first = box.querySelector('input, textarea, select');
     if (first && !opts.noFocus) setTimeout(function () { first.focus(); }, 120);

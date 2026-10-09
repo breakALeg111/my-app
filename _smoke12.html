@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>日常助手 · 日志 / 倒数日 / 保养</title>
+<meta name="description" content="工作日志、倒数日正数日、保养提醒，三合一移动端应用。" />
+<meta name="color-scheme" content="light dark" />
+<!-- 状态栏颜色：浅色/深色分别指定，Android 会据此着色状态栏 -->
+<meta name="theme-color" content="#f4f5fa" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#12141a" media="(prefers-color-scheme: dark)" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="日常助手" />
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" type="image/png" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<script>
+window.__err = '';
+window.addEventListener('error', function (e) { window.__err += '[' + (e.message || '') + ']'; }, true);
+localStorage.setItem('dailyhub.data.v1', JSON.stringify({
+  version: 1,
+  diary: { '2026-10-09': { content: '今天的日志', updatedAt: 1 }, '2026-09-03': { content: '九月三日', updatedAt: 2 } },
+  events: [], maintenance: { mileage: 0, mileageUpdatedAt: '', items: [] },
+  settings: { tab: 'diary' }
+}));
+</script>
+
+<div class="app">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title" id="pageTitle">工作日志</div>
+      <div class="topbar-sub" id="pageSub"></div>
+    </div>
+  </header>
+
+  <main class="content" id="content">
+
+    <!-- ============ 工作日志 ============ -->
+    <section class="view is-active" id="view-diary">
+      <div class="card datebar">
+        <button class="nav-btn" id="prevDay" type="button" aria-label="前一天">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+        </button>
+        <div class="date-main">
+          <input type="date" id="diaryDate" class="date-input-hidden" aria-label="选择日期" />
+          <div class="date-display">
+            <span class="date-ico">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16" /><rect x="4" y="5" width="16" height="15" rx="3" /></svg>
+            </span>
+            <span class="date-text">
+              <span class="date-week" id="diaryWeek"></span>
+              <span class="date-big"><b id="dateBig"></b></span>
+            </span>
+            <span class="date-caret">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </span>
+          </div>
+        </div>
+        <button class="nav-btn" id="nextDay" type="button" aria-label="后一天">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+        </button>
+        <button class="btn btn-soft btn-sm" id="todayBtn" type="button">今天</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title" id="diaryHeadLabel">今日日志</h2>
+          <span class="badge" id="diaryBadge">未记录</span>
+        </div>
+        <textarea id="diaryInput" class="textarea" rows="9" placeholder="今天完成了哪些工作？遇到了什么问题？&#10;记录下来吧…"></textarea>
+        <div class="row-between">
+          <span class="hint" id="diaryMeta">0 字</span>
+          <div class="btn-row">
+            <button class="btn btn-ghost btn-sm" id="diaryDelete" type="button">删除本日</button>
+            <button class="btn btn-primary btn-sm" id="diarySave" type="button">保存</button>
+          </div>
+        </div>
+        <p class="hint block" id="diarySavedAt"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">历史日志</h2>
+          <span class="hint" id="diaryCount"></span>
+        </div>
+        <div class="filter-row">
+          <select id="logScope" class="input input-sm">
+            <option value="month">按月份</option>
+            <option value="quarter">按季度</option>
+            <option value="all">全部</option>
+          </select>
+          <button class="nav-btn nav-btn-sm" id="logPrev" type="button" aria-label="上一段">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+          </button>
+          <select id="logPeriod" class="input input-sm"></select>
+          <button class="nav-btn nav-btn-sm" id="logNext" type="button" aria-label="下一段">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+        <input type="search" id="diarySearch" class="input" placeholder="搜索日期或关键词" />
+        <div id="diaryList" class="list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 class="card-title">数据管理</h2></div>
+        <div class="field-row">
+          <select id="qYear" class="input"></select>
+          <select id="qQuarter" class="input">
+            <option value="1">Q1（1-3月）</option>
+            <option value="2">Q2（4-6月）</option>
+            <option value="3">Q3（7-9月）</option>
+            <option value="4">Q4（10-12月）</option>
+          </select>
+        </div>
+        <div class="btn-grid">
+          <button class="btn btn-soft" id="exportQuarterText" type="button">导出本季度</button>
+          <button class="btn btn-soft" id="exportAllText" type="button">导出全部</button>
+          <button class="btn btn-soft" id="importText" type="button">文本导入</button>
+        </div>
+        <p class="hint block">导出会生成纯文本并弹出复制窗口；导入时粘贴同样格式的文本即可。格式：<br />【2026-09-03】<br />日志内容<br />------------------------------<br />备份、网盘同步与清空数据在「设置」页。</p>
+      </div>
+    </section>
+
+    <!-- ============ 倒数日 / 正数日 ============ -->
+    <section class="view" id="view-events">
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">我的日子</h2>
+          <button class="btn btn-primary btn-sm" id="addEvent" type="button">+ 添加</button>
+        </div>
+        <div class="seg" id="eventFilter">
+          <button class="seg-btn is-active" data-filter="all" type="button">全部</button>
+          <button class="seg-btn" data-filter="future" type="button">未来</button>
+          <button class="seg-btn" data-filter="past" type="button">已过</button>
+        </div>
+        <p class="hint block">按住右侧 ⠿ 拖动可自定义排序，也可点 ↑ ↓ 微调。</p>
+        <div id="eventList" class="list"></div>
+      </div>
+    </section>
+
+    <!-- ============ 保养提醒 ============ -->
+    <section class="view" id="view-care">
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">当前里程</h2>
+          <span class="hint" id="mileMeta"></span>
+        </div>
+        <div class="field-row">
+          <input type="number" inputmode="numeric" min="0" step="1" id="mileInput" class="input" placeholder="例如 12580" />
+          <span class="unit">km</span>
+          <button class="btn btn-primary btn-sm" id="mileSave" type="button">保存</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">保养项目</h2>
+          <div class="btn-row">
+            <select id="careSort" class="input input-sm">
+              <option value="urgent">按紧急度</option>
+              <option value="name">按名称</option>
+              <option value="created">按添加顺序</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="addItem" type="button">+ 添加</button>
+          </div>
+        </div>
+        <div id="careList" class="list"></div>
+        <p class="hint block">判定规则：剩余里程 ≤ 0 或剩余天数 ≤ 0 为<span class="c-red">超期（红）</span>；剩余里程 ≤ 1000km 或剩余天数 ≤ 30 天为<span class="c-amber">临近（黄）</span>；其余为<span class="c-green">安全（绿）</span>，两者先到为准。</p>
+      </div>
+    </section>
+
+    <!-- ============ 设置 / 备份同步 ============ -->
+    <section class="view" id="view-settings">
+      <div class="card">
+        <div class="card-head"><h2 class="card-title">安装到手机桌面</h2></div>
+        <button class="btn btn-primary" id="btnInstall" type="button" style="width:100%">安装应用</button>
+        <p class="hint block" id="installHint">安装后会在桌面出现图标，可全屏、离线使用，和 App 一样。</p>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2 class="card-title">数据与存储</h2></div>
+        <div class="info-row"><span>工作日志</span><span id="stDiary">—</span></div>
+        <div class="info-row"><span>倒数日</span><span id="stEvents">—</span></div>
+        <div class="info-row"><span>保养项目</span><span id="stCare">—</span></div>
+        <div class="info-row"><span>存储方式</span><span id="stBackend">—</span></div>
+        <div class="info-row"><span>数据占用</span><span id="stSize">—</span></div>
+        <div class="info-row"><span>上次备份</span><span id="stBackup">—</span></div>
+        <div class="btn-grid" style="margin-top:12px">
+          <button class="btn btn-soft" id="exportBackup" type="button">完整备份</button>
+          <button class="btn btn-soft" id="importBackup" type="button">恢复备份</button>
+          <button class="btn btn-danger-soft" id="clearAll" type="button">清空数据</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2 class="card-title">对象存储同步</h2>
+          <span class="hint" id="cosState"></span>
+        </div>
+        <div class="field">
+          <label>服务商</label>
+          <select class="input" id="cosProvider">
+            <option value="cos">腾讯云 COS</option>
+            <option value="oss">阿里云 OSS</option>
+          </select>
+        </div>
+        <div class="field-2">
+          <div class="field">
+            <label id="cosAkLabel">SecretId</label>
+            <input class="input" id="cosAk" placeholder="AKIDxxxxxxxx" />
+          </div>
+          <div class="field">
+            <label id="cosSkLabel">SecretKey</label>
+            <input class="input" id="cosSk" type="password" placeholder="密钥" />
+          </div>
+        </div>
+        <div class="field-2">
+          <div class="field">
+            <label>存储桶 Bucket</label>
+            <input class="input" id="cosBucket" placeholder="mybackup-1250000000" />
+          </div>
+          <div class="field">
+            <label id="cosRegionLabel">地域 Region</label>
+            <input class="input" id="cosRegion" placeholder="ap-guangzhou" />
+          </div>
+        </div>
+        <div class="field">
+          <label>文件路径</label>
+          <input class="input" id="cosKey" placeholder="daily-hub/backup.json" />
+        </div>
+        <label class="switch-row">
+          <span>每天首次打开时自动备份</span>
+          <span class="switch"><input type="checkbox" id="cosAuto" /><i></i></span>
+        </label>
+        <div class="btn-grid" style="margin-top:10px">
+          <button class="btn btn-soft" id="cosTest" type="button">测试连接</button>
+          <button class="btn btn-primary" id="cosBackup" type="button">备份到云</button>
+          <button class="btn btn-soft" id="cosRestore" type="button">从云恢复</button>
+        </div>
+        <p class="hint block">需在存储桶的跨域(CORS)设置中放行本站来源（如 <code>https://&lt;用户名&gt;.github.io</code>），并允许 GET / PUT / HEAD，允许 Headers 填 <code>*</code>。建议用子账号密钥并只授权这一个文件。</p>
+      </div>
+
+      <div class="card" id="cardNotify">
+        <div class="card-head"><h2 class="card-title">系统提醒</h2></div>
+        <label class="switch-row">
+          <span>每天 9:00 推送保养与倒数日提醒</span>
+          <span class="switch"><input type="checkbox" id="notifyEnable" /><i></i></span>
+        </label>
+        <div class="btn-grid" style="margin-top:10px;grid-template-columns:1fr">
+          <button class="btn btn-soft" id="notifyTest" type="button">发送一条测试通知</button>
+        </div>
+        <p class="hint block">提醒由手机系统发出，App 未打开也能收到；数据仍然只存在本机。</p>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab is-active" data-view="diary" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 10h8M8 14h8M8 18h5"/></svg>
+      <span>日志</span>
+    </button>
+    <button class="tab" data-view="events" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 8h16"/><rect x="4" y="5" width="16" height="16" rx="3"/><path d="M9 13h2v3H9z"/></svg>
+      <span>倒数日</span>
+    </button>
+    <button class="tab" data-view="care" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span>保养</span>
+    </button>
+    <button class="tab" data-view="settings" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      <span>设置</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast-host" id="toastHost"></div>
+<div class="modal-host" id="modalHost"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/cosync.js"></script>
+<script src="js/diary.js"></script>
+<script src="js/events.js"></script>
+<script src="js/care.js"></script>
+<script src="js/dataio.js"></script>
+<script src="js/settings.js"></script>
+<script src="vendor/capacitor/capacitor.js"></script>
+<script src="js/native.js"></script>
+<script src="js/app.js"></script>
+
+<script>
+var out = [];
+function check(name, actual, expected) {
+  var ok = String(actual) === String(expected);
+  out.push((ok ? 'PASS ' : 'FAIL ') + name + (ok ? '' : ' => ' + JSON.stringify(String(actual)) + ' 期望 ' + JSON.stringify(String(expected))));
+}
+function done() {
+  var pre = document.createElement('pre');
+  pre.id = 'result';
+  pre.textContent = out.join('\n') + '\nERR=' + window.__err;
+  document.body.appendChild(pre);
+}
+
+setTimeout(function () {
+  // 1. 日期显示：单行
+  var bar = document.querySelector('.datebar');
+  var disp = document.querySelector('.date-display');
+  var big = document.querySelector('.date-big');
+  var week = document.getElementById('diaryWeek');
+  out.push('INFO barH=' + Math.round(bar.getBoundingClientRect().height) +
+           ' dispH=' + Math.round(disp.getBoundingClientRect().height) +
+           ' bigH=' + Math.round(big.getBoundingClientRect().height) +
+           ' bigW=' + Math.round(big.getBoundingClientRect().width) +
+           ' weekW=' + Math.round(week.getBoundingClientRect().width));
+  check('date.bigOneLine', big.getBoundingClientRect().height <= 26, true);
+  check('date.barOneRow', bar.getBoundingClientRect().height <= 72, true);
+  check('date.bigText', big.textContent, '10月9日');
+  check('date.weekText', week.textContent.indexOf('今天') >= 0 && week.textContent.indexOf('2026 年') >= 0, true);
+  check('date.fontSize', getComputedStyle(document.querySelector('.date-big b')).fontSize, '16px');
+  check('date.weekNoWrap', getComputedStyle(week).whiteSpace, 'nowrap');
+
+  // 2. 导出
+  document.getElementById('exportAllText').click();
+  check('export.modal', !!document.getElementById('expText'), true);
+  var closeBtn = document.querySelector('#modalHost .modal-foot .btn-primary');
+  if (closeBtn) closeBtn.click();
+
+  // 3. 导入（修复点）
+  setTimeout(function () {
+    document.getElementById('importText').click();
+    document.getElementById('impText').value =
+      '工作日志导出 - 全部记录\n共 2 条记录\n==================================================\n\n' +
+      '【2026-05-01】\n五月的新日志\n------------------------------\n' +
+      '【2026-10-09】\n覆盖后的今天\n------------------------------';
+    document.querySelector('#modalHost .modal-foot .btn-primary').click();
+    setTimeout(function () {
+      var choiceBtns = document.querySelectorAll('#modalHost [data-choice]');
+      check('import.choiceVisible', choiceBtns.length >= 1, true);
+      if (!choiceBtns.length) { done(); return; }
+      choiceBtns[0].click();   // 合并
+      setTimeout(function () {
+        check('import.count', App.store.diary.count(), 3);
+        check('import.new', App.store.diary.get('2026-05-01'), '五月的新日志');
+        check('import.overwrite', App.store.diary.get('2026-10-09'), '覆盖后的今天');
+
+        // 4. 仅补充缺失模式
+        document.getElementById('importText').click();
+        document.getElementById('impText').value = '【2026-06-06】\n六月日志\n------------------------------\n【2026-10-09】\n不该覆盖\n------------------------------';
+        document.querySelector('#modalHost .modal-foot .btn-primary').click();
+        setTimeout(function () {
+          var btns = document.querySelectorAll('#modalHost [data-choice]');
+          btns[1].click();  // 仅补充缺失
+          setTimeout(function () {
+            check('append.count', App.store.diary.count(), 4);
+            check('append.keep', App.store.diary.get('2026-10-09'), '覆盖后的今天');
+            check('append.new', App.store.diary.get('2026-06-06'), '六月日志');
+            check('noJsError', window.__err, '');
+            done();
+          }, 400);
+        }, 200);
+      }, 400);
+    }, 250);
+  }, 250);
+}, 2600);
+</script>
+</body>
+</html>

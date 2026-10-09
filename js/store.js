@@ -20,7 +20,8 @@
         careSort: 'urgent',
         eventsFilter: 'all',
         lastBackupAt: 0,
-        cos: { provider: 'cos', ak: '', sk: '', bucket: '', region: '', key: 'daily-hub/backup.json', auto: false }
+        cos: { provider: 'cos', ak: '', sk: '', bucket: '', region: '', key: 'daily-hub/backup.json', auto: false },
+        notify: true
       }
     };
   }
@@ -72,6 +73,7 @@
     d.settings.careSort = ['urgent', 'name', 'created'].indexOf(s.careSort) >= 0 ? s.careSort : 'urgent';
     d.settings.eventsFilter = ['all', 'future', 'past'].indexOf(s.eventsFilter) >= 0 ? s.eventsFilter : 'all';
     d.settings.lastBackupAt = Number(s.lastBackupAt) || 0;
+    d.settings.notify = s.notify === undefined ? true : !!s.notify;
 
     var o = s.cos || {};
     d.settings.cos = {

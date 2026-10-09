@@ -1,0 +1,25 @@
+{
+  "name": "daily-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "日常助手：工作日志 / 倒数日 / 保养提醒（Web + Android）",
+  "scripts": {
+    "build:web": "python tools/build_web.py",
+    "cap:init": "cap init",
+    "sync": "npm run build:web && cap sync android",
+    "android": "npm run sync && cd android && gradlew.bat assembleDebug",
+    "release": "npm run sync && cd android && gradlew.bat assembleRelease",
+    "open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/splash-screen": "^8.0.2",
+    "@capacitor/status-bar": "^8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3"
+  }
+}

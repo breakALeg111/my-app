@@ -1,0 +1,16 @@
+# 依赖与构建产物
+node_modules/
+www/
+dist/
+android/build/
+android/app/build/
+android/.gradle/
+android/capacitor-cordova-android-plugins/build/
+*.apk
+*.aab
+local.properties.bak
+
+# 编辑器
+.vscode/
+.idea/
+.DS_Store

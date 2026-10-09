@@ -49,6 +49,8 @@
       cos.saveCfg({ auto: els.cosAuto.checked });
       ui.toast(els.cosAuto.checked ? '已开启自动备份' : '已关闭自动备份');
     });
+    bindNotify();
+
     document.getElementById('cosTest').addEventListener('click', cosTest);
     document.getElementById('cosBackup').addEventListener('click', cosBackup);
     document.getElementById('cosRestore').addEventListener('click', cosRestore);
@@ -161,6 +163,30 @@
     }, function (err) {
       refreshCosState('下载失败');
       ui.toast(err.message, 'error');
+    });
+  }
+
+  /* ---------------- 系统提醒（仅原生 App） ---------------- */
+
+  function bindNotify() {
+    var card = document.getElementById('cardNotify');
+    var box = document.getElementById('notifyEnable');
+    if (!card || !box) return;
+
+    var native = App.native && App.native.isNative && App.native.isNative();
+    if (!native) {
+      card.style.display = 'none';    // 浏览器环境没有本地通知
+      return;
+    }
+    box.checked = !!store.state.settings.notify;
+    box.addEventListener('change', function () {
+      store.state.settings.notify = box.checked;
+      store.save();
+      App.native.refresh();
+      ui.toast(box.checked ? '已开启每日提醒' : '已关闭每日提醒');
+    });
+    document.getElementById('notifyTest').addEventListener('click', function () {
+      App.native.test();
     });
   }
 

@@ -31,6 +31,7 @@
       try { tabParam = new URLSearchParams(location.search).get('tab'); } catch (e) { tabParam = null; }
       switchTo(tabParam && TITLES[tabParam] ? tabParam : (store.state.settings.tab || 'diary'));
       App.settings.maybeAutoBackup();
+      if (App.native && App.native.init) App.native.init();
     });
 
     // 跨天 / 长时间停留后自动刷新
@@ -111,11 +112,13 @@
     App.care.renderMileage();
     App.care.render();
     if (App.settings && App.settings.renderInfo) App.settings.renderInfo();
+    if (App.native && App.native.refresh) App.native.refresh();
     updateSub();
   };
 
   App.switchTo = switchTo;
   App.updateSub = updateSub;
+  App.currentView = function () { return currentView; };
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);

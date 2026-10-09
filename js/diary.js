@@ -16,7 +16,6 @@
     els.date = document.getElementById('diaryDate');
     els.week = document.getElementById('diaryWeek');
     els.big = document.getElementById('dateBig');
-    els.dateYear = document.getElementById('dateYear');
     els.input = document.getElementById('diaryInput');
     els.head = document.getElementById('diaryHeadLabel');
     els.badge = document.getElementById('diaryBadge');
@@ -235,9 +234,11 @@
     var diff = U.diffDays(U.todayStr(), current);
     var rel = diff === 0 ? '今天' : (diff === 1 ? '明天' : (diff === -1 ? '昨天' : ''));
     var week = U.weekday(current);
-    els.week.innerHTML = U.esc(week) + (rel ? ' · <span class="today-chip">' + rel + '</span>' : '');
+    // 上面一行小字：周几 · 今天 · 年份；下面大字只放「月日」，保证一行显示得下
+    els.week.innerHTML = U.esc(week)
+      + (rel ? ' · <span class="today-chip">' + rel + '</span>' : '')
+      + ' · ' + current.slice(0, 4) + ' 年';
     els.big.textContent = (+current.slice(5, 7)) + '月' + (+current.slice(8, 10)) + '日';
-    els.dateYear.textContent = current.slice(0, 4) + ' 年';
   }
 
   function refreshBadge() {

@@ -146,29 +146,28 @@
         var rows = parseLogText(text);
         if (!rows.length) { ui.toast('没有解析到日志记录，请检查格式', 'error'); return false; }
 
-        setTimeout(function () {
-          close();
-          ui.choice({
+        // 直接接管弹层：先关闭当前表单，再展示导入方式（返回 false 阻止外层重复关闭）
+        close();
+        ui.choice({
             title: '导入 ' + rows.length + ' 条日志',
             message: '日期范围：' + rows[rows.length - 1].date + ' ~ ' + rows[0].date + '。选择导入方式：',
             options: [
               { text: '合并（同日期以导入内容为准）', value: 'merge', primary: true },
               { text: '仅补充缺失的日期', value: 'append' }
             ]
-          }).then(function (mode) {
-            if (!mode) return;
-            var added = 0, updated = 0, skipped = 0;
-            rows.forEach(function (r) {
-              var has = !!store.state.diary[r.date];
-              if (has && mode === 'append') { skipped++; return; }
-              if (has) updated++; else added++;
-              store.state.diary[r.date] = { content: r.content, updatedAt: Date.now() };
-            });
-            store.save();
-            App.refreshAll();
-            ui.toast('导入完成：新增 ' + added + ' 条，更新 ' + updated + ' 条' + (skipped ? '，跳过 ' + skipped + ' 条' : ''), 'ok');
+        }).then(function (mode) {
+          if (!mode) return;
+          var added = 0, updated = 0, skipped = 0;
+          rows.forEach(function (r) {
+            var has = !!store.state.diary[r.date];
+            if (has && mode === 'append') { skipped++; return; }
+            if (has) updated++; else added++;
+            store.state.diary[r.date] = { content: r.content, updatedAt: Date.now() };
           });
-        }, 0);
+          store.save();
+          App.refreshAll();
+          ui.toast('导入完成：新增 ' + added + ' 条，更新 ' + updated + ' 条' + (skipped ? '，跳过 ' + skipped + ' 条' : ''), 'ok');
+        });
         return false;
       }
     });

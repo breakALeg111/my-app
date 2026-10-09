@@ -1,0 +1,25 @@
+{
+  "appId": "com.dailyhub.app",
+  "appName": "日常助手",
+  "webDir": "www",
+  "loggingEnabled": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1000,
+      "launchAutoHide": true,
+      "backgroundColor": "#f4f5fa",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "LocalNotifications": {
+      "iconColor": "#6366f1"
+    }
+  }
+}
